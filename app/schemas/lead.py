@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr
 
@@ -40,3 +40,10 @@ class WebhookResponse(BaseModel):
     status: str
     lead_id: int
     analysis: LeadAnalysisOut
+
+
+class PaginatedLeads(BaseModel):
+    total: int
+    skip: int
+    limit: int
+    items: List[LeadOut]

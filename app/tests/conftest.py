@@ -1,3 +1,8 @@
+import os
+
+# Must be set before any app import so pydantic-settings validation passes at startup.
+os.environ.setdefault("OPENAI_API_KEY", "test-key-not-real")
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine

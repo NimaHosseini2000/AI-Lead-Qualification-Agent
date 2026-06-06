@@ -82,7 +82,19 @@ class TestWebhookEndpoint:
 
 class TestLeadRetrieval:
     def test_list_leads_empty_on_fresh_db(self, client):
-        assert client.get("/leads").json() == []
+        data = client.get("/leads").json()
+        assert data["total"] == 0
+        assert data["items"] == []
+
+    def test_list_leads_default_pagination_fields(self, client):
+        data = client.get("/leads").json()
+        assert data["skip"] == 0
+        assert data["limit"] == 20
+
+    def test_list_leads_custom_pagination(self, client):
+        data = client.get("/leads?skip=5&limit=10").json()
+        assert data["skip"] == 5
+        assert data["limit"] == 10
 
     def test_get_unknown_lead_returns_404(self, client):
         assert client.get("/leads/999").status_code == 404
@@ -98,9 +110,9 @@ class TestLeadRetrieval:
     def test_list_leads_returns_submitted_lead(self, client):
         with patch("app.routes.webhook.qualify_lead", return_value=MOCK_AI_RESULT):
             client.post("/webhook/lead", json=LEAD_PAYLOAD)
-        leads = client.get("/leads").json()
-        assert len(leads) == 1
-        assert leads[0]["email"] == "john@company.com"
+        data = client.get("/leads").json()
+        assert data["total"] == 1
+        assert data["items"][0]["email"] == "john@company.com"
 
 
 # ---------------------------------------------------------------------------

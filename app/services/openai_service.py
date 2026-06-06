@@ -1,9 +1,10 @@
 import json
 import logging
-import os
 from typing import Optional
 
 from openai import OpenAI
+
+from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ Return ONLY the JSON object. No markdown fences, no explanation."""
 
 
 def qualify_lead(name: str, email: str, company: str, message: str) -> Optional[dict]:
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(api_key=get_settings().openai_api_key)
 
     user_prompt = (
         f"Name: {name}\n"
