@@ -1,0 +1,132 @@
+{
+  "info": {
+    "name": "AI Lead Qualification Agent",
+    "description": "Automated lead qualification system using OpenAI GPT-4o-mini.\n\nSet the {{base_url}} variable to http://localhost:8000 before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Verify the API is running."
+      },
+      "response": [
+        {
+          "name": "200 OK",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"status\": \"ok\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Submit Lead (Webhook)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"John Smith\",\n    \"email\": \"john@acmeinc.com\",\n    \"company\": \"Acme Inc\",\n    \"message\": \"We want AI automation for customer support.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/webhook/lead",
+          "host": ["{{base_url}}"],
+          "path": ["webhook", "lead"]
+        },
+        "description": "Submit a new inbound lead. Triggers the full qualification workflow:\n1. Validate payload\n2. Persist to SQLite\n3. Qualify via OpenAI GPT-4o-mini\n4. Route via CRM logic\n5. Log notification"
+      },
+      "response": [
+        {
+          "name": "201 Created — Hot Lead",
+          "status": "Created",
+          "code": 201,
+          "body": "{\n    \"status\": \"qualified\",\n    \"lead_id\": 1,\n    \"analysis\": {\n        \"id\": 1,\n        \"lead_id\": 1,\n        \"lead_score\": 85,\n        \"priority\": \"Hot\",\n        \"summary\": \"Acme Inc seeks AI-powered customer support automation.\",\n        \"recommended_action\": \"Schedule a demo call within 24 hours.\",\n        \"crm_route\": \"Sales Team\",\n        \"created_at\": \"2024-11-15T09:42:31\"\n    }\n}"
+        },
+        {
+          "name": "422 Unprocessable — Missing Field",
+          "status": "Unprocessable Entity",
+          "code": 422,
+          "body": "{\n    \"detail\": [\n        {\n            \"type\": \"missing\",\n            \"loc\": [\"body\", \"company\"],\n            \"msg\": \"Field required\"\n        }\n    ]\n}"
+        },
+        {
+          "name": "502 Bad Gateway — OpenAI Failure",
+          "status": "Bad Gateway",
+          "code": 502,
+          "body": "{\n    \"detail\": \"AI qualification failed. Check your OPENAI_API_KEY and try again.\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "List All Leads",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/leads",
+          "host": ["{{base_url}}"],
+          "path": ["leads"]
+        },
+        "description": "Returns all leads and their AI analysis, newest first."
+      },
+      "response": [
+        {
+          "name": "200 OK",
+          "status": "OK",
+          "code": 200,
+          "body": "[\n    {\n        \"id\": 1,\n        \"name\": \"John Smith\",\n        \"email\": \"john@acmeinc.com\",\n        \"company\": \"Acme Inc\",\n        \"message\": \"We want AI automation for customer support.\",\n        \"created_at\": \"2024-11-15T09:42:31\",\n        \"analysis\": {\n            \"id\": 1,\n            \"lead_id\": 1,\n            \"lead_score\": 85,\n            \"priority\": \"Hot\",\n            \"summary\": \"Acme Inc seeks AI-powered customer support automation.\",\n            \"recommended_action\": \"Schedule a demo call within 24 hours.\",\n            \"crm_route\": \"Sales Team\",\n            \"created_at\": \"2024-11-15T09:42:31\"\n        }\n    }\n]"
+        }
+      ]
+    },
+    {
+      "name": "Get Lead by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/leads/1",
+          "host": ["{{base_url}}"],
+          "path": ["leads", "1"]
+        },
+        "description": "Returns a single lead and its analysis by ID."
+      },
+      "response": [
+        {
+          "name": "200 OK",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"id\": 1,\n    \"name\": \"John Smith\",\n    \"email\": \"john@acmeinc.com\",\n    \"company\": \"Acme Inc\",\n    \"message\": \"We want AI automation for customer support.\",\n    \"created_at\": \"2024-11-15T09:42:31\",\n    \"analysis\": {\n        \"id\": 1,\n        \"lead_id\": 1,\n        \"lead_score\": 85,\n        \"priority\": \"Hot\",\n        \"summary\": \"Acme Inc seeks AI-powered customer support automation.\",\n        \"recommended_action\": \"Schedule a demo call within 24 hours.\",\n        \"crm_route\": \"Sales Team\",\n        \"created_at\": \"2024-11-15T09:42:31\"\n    }\n}"
+        },
+        {
+          "name": "404 Not Found",
+          "status": "Not Found",
+          "code": 404,
+          "body": "{\n    \"detail\": \"Lead not found\"\n}"
+        }
+      ]
+    }
+  ]
+}

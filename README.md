@@ -4,35 +4,17 @@ An automated lead qualification system built with FastAPI. Inbound leads arrive 
 
 ## Architecture
 
-```
-POST /webhook/lead
-        │
-        ▼
- Pydantic Validation
-        │
-        ▼
-  SQLite (Lead stored)
-        │
-        ▼
- OpenAI GPT-4o-mini
-  → lead_score (0–100)
-  → priority (Hot/Warm/Cold)
-  → summary
-  → recommended_action
-        │
-        ▼
-  CRM Routing Logic
-  → Sales Team / SDR Queue / Nurture Campaign
-        │
-        ▼
-  SQLite (LeadAnalysis stored)
-        │
-        ▼
-  Notification (console log)
-        │
-        ▼
-  JSON Response
-```
+![Architecture diagram](docs/architecture.png)
+
+| Step | Component | What it does |
+|------|-----------|--------------|
+| 1 | `POST /webhook/lead` | Receives the inbound lead payload |
+| 2 | Pydantic Validation | Validates required fields and email format |
+| 3 | SQLite Storage | Persists the lead via SQLAlchemy |
+| 4 | OpenAI GPT-4o-mini | Scores the lead and returns structured JSON |
+| 5 | CRM Routing | Assigns a sales route based on the score |
+| 6 | Notification Service | Logs a simulated Slack alert to the console |
+| 7 | JSON Response | Returns `201` with the full analysis |
 
 ## Tech Stack
 
@@ -122,6 +104,12 @@ Tests use an in-memory SQLite database and mock the OpenAI API, so no API key or
 
 ## API Reference
 
+### Postman Collection
+
+Import [`docs/postman_collection.json`](docs/postman_collection.json) into Postman, set the `base_url` variable to `http://localhost:8000`, and all four requests are ready to run.
+
+---
+
 ### `POST /webhook/lead`
 
 Receive a lead and run the full qualification workflow.
@@ -159,6 +147,8 @@ Receive a lead and run the full qualification workflow.
 **Error `422`** — missing or invalid fields in the request body.  
 **Error `502`** — OpenAI qualification failed.
 
+![POST /webhook/lead](docs/api_post_webhook_lead.png)
+
 ---
 
 ### `GET /leads`
@@ -190,6 +180,8 @@ Returns a single lead by ID.
 **Response `200`:** Lead object with nested analysis.  
 **Response `404`:** `{"detail": "Lead not found"}`
 
+![GET /leads/{id}](docs/api_get_lead_id.png)
+
 ---
 
 ### `GET /health`
@@ -197,6 +189,20 @@ Returns a single lead by ID.
 ```json
 {"status": "ok"}
 ```
+
+![GET /health](docs/api_health.png)
+
+## Generating Documentation Assets
+
+To regenerate the architecture diagram and API showcase images:
+
+```bash
+python generate_assets.py
+```
+
+This requires `matplotlib` (included with Anaconda / `pip install matplotlib`) and writes five PNGs to `docs/`.
+
+---
 
 ## CRM Routing Logic
 
